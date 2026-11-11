@@ -1,0 +1,2871 @@
+<!DOCTYPE html>
+<!--
+  The Lafont Box — A visual interaction net computer in one tab.
+  Studio: ConsciousNode SoftWorks
+  Licence: MIT
+
+  Copyright (c) 2026 ConsciousNode SoftWorks
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Lafont Box — Visual Interaction Net Computer</title>
+  <style>
+    :root {
+      --bg-0: #0b0e14;
+      --bg-1: #111621;
+      --bg-2: #171e2e;
+      --bg-3: #1f293d;
+      --border: #2a354d;
+      --border-hi: #3d4e70;
+      --text-0: #e6edf3;
+      --text-1: #9fb0c7;
+      --text-2: #6b7d96;
+      --accent: #38bdf8;
+      --accent-dim: #0284c7;
+      --active-pair: #f59e0b;
+      --active-glow: rgba(245, 158, 11, 0.35);
+      --ok: #10b981;
+      --err: #f43f5e;
+      --err-bg: rgba(244, 63, 94, 0.12);
+      --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "Fira Code", Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-0);
+      color: var(--text-0);
+      font-family: var(--sans);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-rows: 48px 1fr auto;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Top Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-0);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--active-pair);
+      box-shadow: 0 0 10px var(--active-pair);
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-2);
+      font-family: var(--mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      color: var(--text-1);
+      font-family: var(--mono);
+    }
+
+    select, button {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-0);
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 11px;
+      cursor: pointer;
+      transition: background 0.14s ease, border-color 0.14s ease, transform 0.06s ease;
+    }
+
+    select:hover, button:hover:not(:disabled) {
+      background: var(--bg-3);
+      border-color: var(--border-hi);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: var(--accent);
+    }
+
+    .btn-fire {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.55);
+      color: #fcd34d;
+      font-weight: 600;
+    }
+
+    .btn-fire:hover:not(:disabled) {
+      background: rgba(245, 158, 11, 0.26);
+      border-color: var(--active-pair);
+    }
+
+    .btn-run.running {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--err);
+      color: #fda4af;
+    }
+
+    /* Main Split Pane */
+    .split-pane {
+      display: grid;
+      grid-template-columns: minmax(310px, 42%) 1fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 820px) {
+      .split-pane {
+        grid-template-columns: 1fr;
+        grid-template-rows: 44% 56%;
+      }
+      .brand-sub {
+        display: none;
+      }
+    }
+
+    /* Editor Pane */
+    .editor-pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--bg-1);
+      min-height: 0;
+    }
+
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-1);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .editor-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+      background: #0d1119;
+    }
+
+    .line-numbers {
+      width: 42px;
+      padding: 12px 6px 12px 0;
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--text-2);
+      background: #0a0d14;
+      border-right: 1px solid #1b2333;
+      overflow: hidden;
+      user-select: none;
+      white-space: pre;
+    }
+
+    .code-textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--text-0);
+      background: transparent;
+      white-space: pre;
+      overflow: auto;
+      tab-size: 2;
+      user-select: text;
+    }
+
+    .diagnostics-panel {
+      max-height: 135px;
+      min-height: 34px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+      background: var(--bg-1);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      padding: 7px 12px;
+      user-select: text;
+    }
+
+    .diag-ok {
+      color: var(--ok);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .diag-err-item {
+      color: #fda4af;
+      background: var(--err-bg);
+      border-left: 3px solid var(--err);
+      padding: 5px 8px;
+      margin-bottom: 4px;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+
+    .diag-err-item:hover {
+      background: rgba(244, 63, 94, 0.2);
+    }
+
+    /* Canvas Pane */
+    .canvas-pane {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-0);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .canvas-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #net-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #net-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Footer Controls & Telemetry */
+    .footer-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 9px 16px;
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-1);
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+      width: 110px;
+    }
+
+    .info-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(42, 53, 77, 0.55);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-1);
+    }
+
+    .telemetry-items {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-pill strong {
+      color: var(--text-0);
+    }
+
+    .stat-active strong {
+      color: var(--active-pair);
+    }
+
+    .stat-nf-yes strong {
+      color: var(--ok);
+    }
+
+    .stat-nf-no strong {
+      color: var(--active-pair);
+    }
+
+    /* Help Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 14, 0.76);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border-hi);
+      border-radius: 10px;
+      max-width: 720px;
+      width: 100%;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      user-select: text;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-1);
+    }
+
+    .modal-body h3 {
+      color: var(--text-0);
+      font-size: 14px;
+      margin: 14px 0 6px;
+    }
+
+    .modal-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .modal-body pre {
+      background: #0a0d14;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-0);
+      overflow-x: auto;
+      margin: 6px 0 10px;
+    }
+
+    .modal-body code {
+      font-family: var(--mono);
+      color: #7dd3fc;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="workbench">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="brand-dot"></span>
+          <span>The Lafont Box</span>
+        </div>
+        <span class="brand-sub">ConsciousNode SoftWorks · Visual Interaction Net Computer (Lafont, 1990)</span>
+      </div>
+      <div class="topbar-controls">
+        <label class="control-label" for="example-select">Examples:</label>
+        <select id="example-select" aria-label="Built-in example systems">
+          <option value="combinators">1. Interaction combinators (ε, γ)</option>
+          <option value="peano">2. Peano arithmetic (2 + 3 → 5)</option>
+          <option value="boolean">3. Boolean logic (NOT (TRUE AND FALSE) → True)</option>
+          <option value="lists">4. List operations (Map Double [1, 2, 3] → [2, 4, 6])</option>
+        </select>
+        <button id="btn-help" type="button" title="Syntax & Interaction Net Guide">Help</button>
+      </div>
+    </header>
+
+    <!-- Main Split View -->
+    <main class="split-pane">
+      <!-- Left: Text Editor & Diagnostics -->
+      <section class="editor-pane">
+        <div class="pane-header">
+          <span>Interaction Net Assembler</span>
+          <span id="editor-status-badge">Ready</span>
+        </div>
+        <div class="editor-wrap">
+          <div id="line-numbers" class="line-numbers">1</div>
+          <textarea id="code-editor" class="code-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Interaction net source editor"></textarea>
+        </div>
+        <div id="diagnostics" class="diagnostics-panel" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- Right: Canvas Net Display -->
+      <section class="canvas-pane">
+        <div class="pane-header">
+          <span>Net Display (&lt;canvas&gt; · Top ▲ = Principal Port · Bottom ● = Aux Ports)</span>
+          <span id="canvas-hint">Click any glowing >< active pair to fire it, or drag agents</span>
+        </div>
+        <div class="canvas-container" id="canvas-container">
+          <canvas id="net-canvas"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Controls & Telemetry -->
+    <footer class="footer-bar">
+      <div class="footer-top">
+        <div class="action-buttons">
+          <button id="btn-parse" class="btn-primary" type="button">Parse &amp; Render</button>
+          <button id="btn-step" class="btn-fire" type="button">Step</button>
+          <button id="btn-step-all" class="btn-fire" type="button">Step All</button>
+          <button id="btn-run" class="btn-run" type="button">Run ▶</button>
+          <button id="btn-reset" type="button">Reset</button>
+          <button id="btn-fit" type="button" title="Center and fit net in canvas">Fit View</button>
+        </div>
+        <div class="speed-group">
+          <label for="speed-slider">Run Speed:</label>
+          <input id="speed-slider" type="range" min="60" max="1200" step="20" value="420">
+          <span id="speed-label">420ms/step</span>
+        </div>
+      </div>
+      <div class="info-panel">
+        <div class="telemetry-items">
+          <span class="stat-pill">Steps: <strong id="stat-steps">0</strong></span>
+          <span class="stat-pill stat-active">Active pairs: <strong id="stat-active">0</strong></span>
+          <span class="stat-pill">Agents: <strong id="stat-agents">0</strong></span>
+          <span class="stat-pill">Wires: <strong id="stat-wires">0</strong></span>
+          <span class="stat-pill" id="stat-nf-wrap">Normal form: <strong id="stat-nf">No</strong></span>
+        </div>
+        <div id="last-rule-fired" style="color: var(--text-2);">Rule trace: —</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="help-modal-title">The Lafont Box — Reference &amp; Assembler Syntax</span>
+        <button id="btn-close-help" type="button">Close ✕</button>
+      </div>
+      <div class="modal-body">
+        <h3>1. What is an Interaction Net?</h3>
+        <p>
+          Introduced by Yves Lafont in 1990 (<em>Interaction Nets</em>, POPL '90), an interaction net is a graph-rewriting model of computation where nodes are <strong>agents</strong> with fixed arity and edges are <strong>wires</strong>. Every agent has <strong>1 principal port</strong> (drawn as the top ▲ apex) and <code>n</code> <strong>auxiliary ports</strong> (drawn along the bottom arc, numbered <code>1..n</code>).
+        </p>
+        <p>
+          Reduction happens only when two agents meet principal-port-to-principal-port (<code>A &gt;&lt; B</code>), forming an <strong>active pair</strong>. Because at most one rule exists for any pair of agent types and rules only rewrite active pairs locally, reduction satisfies <strong>strong confluence</strong>: firing active pairs in any order—or all non-overlapping pairs simultaneously via <strong>Step All</strong>—always yields the exact same normal form.
+        </p>
+
+        <h3>2. Assembler Syntax</h3>
+        <pre># 1. Declare agent types: agent &lt;Name&gt; &lt;Arity&gt;
+agent ε 0        -- principal port only
+agent γ 2        -- principal + 2 auxiliary ports
+
+# 2. Declare symmetric interaction rules:
+rule γ(x1, x2) &gt;&lt; γ(y1, y2):
+  x1 ~ y1
+  x2 ~ y2
+
+rule ε() &gt;&lt; γ(x1, x2):
+  ε() ~ x1
+  ε() ~ x2
+
+rule ε() &gt;&lt; ε():
+  -- nothing (both vanish)
+
+# 3. Wire the initial net:
+net main:
+  γ(a, b) &gt;&lt; γ(c, d)
+  a ~ c
+  b ~ d</pre>
+
+        <h3>3. Wiring &amp; Validation Rules</h3>
+        <p>
+          • <code>A(x1, ..., xn) &gt;&lt; B(y1, ..., ym)</code> connects the principal ports of <code>A</code> and <code>B</code> directly.<br>
+          • <code>A(x1, ..., xn) ~ w</code> connects the principal port of <code>A</code> to wire <code>w</code>.<br>
+          • <code>w1 ~ w2</code> fuses wire <code>w1</code> with wire <code>w2</code>.<br>
+          • <code>Result(out)</code> attaches wire <code>out</code> to auxiliary port 1 of a root collector agent.<br>
+          • <strong>Strict Linear Wire Check:</strong> Every wire name in a rule (header + body) or net must appear <strong>exactly twice</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Interaction Net Engine & Built-in Examples (Shared with headless Node.js test suite) -->
+  <script id="lafont-core">
+    (function (root) {
+      'use strict';
+
+      // =========================================================================
+      // 1. BUILT-IN EXAMPLE SYSTEMS
+      // =========================================================================
+      const EXAMPLES = {
+        combinators: `# System 1: Interaction Combinators (Lafont, 1990)
+# Two agent types: ε (eraser, arity 0) and γ (duplicator, arity 2).
+# Three rules: annihilation (γ >< γ), duplication/erasure (ε >< γ), erasure (ε >< ε).
+
+agent ε 0        -- eraser: principal port only, no auxiliary ports
+agent γ 2        -- duplicator: principal + 2 auxiliary ports
+
+rule γ(x1, x2) >< γ(y1, y2):
+  x1 ~ y1
+  x2 ~ y2
+
+rule ε() >< γ(x1, x2):
+  ε() ~ x1
+  ε() ~ x2
+
+rule ε() >< ε():
+  -- nothing (both vanish)
+
+# Sample net: copy/erase interaction across an active commutator pair
+# Step 1 fires γ >< γ, routing ε() into γ(a, b).
+# Step 2 fires ε >< γ, duplicating ε() to wires a and b.
+# Step 3 fires ε >< ε on wire a, leaving a normal form of 1 γ and 1 ε.
+net main:
+  γ(x1, x2) >< γ(y1, y2)
+  ε() ~ x1
+  γ(a, b) ~ y1
+  ε() ~ a
+  γ(b, x2) ~ y2`,
+
+        peano: `# System 2: Peano Arithmetic
+# Agents: Z (zero, 0), S (successor, 1), Add (addition, 2), Result (readout, 1).
+# Sample net: 2 + 3, reducing in 3 steps to 5 (five S nodes over a Z).
+
+agent Z 0        -- zero: principal port only
+agent S 1        -- successor: principal + 1 auxiliary port (predecessor)
+agent Add 2      -- addition: principal (1st arg) + aux1 (2nd arg) + aux2 (sum)
+agent Result 1   -- readout collector: aux1 holds the reduced Peano numeral
+
+rule Add(y, r) >< S(x):
+  Add(y, r1) ~ x
+  S(r1) ~ r
+
+rule Add(y, r) >< Z():
+  y ~ r
+
+# Sample net: 2 + 3 = 5
+net main:
+  # 2 = S(S(Z))
+  Z() ~ a0
+  S(a0) ~ a1
+  S(a1) ~ two
+
+  # 3 = S(S(S(Z)))
+  Z() ~ b0
+  S(b0) ~ b1
+  S(b1) ~ b2
+  S(b2) ~ three
+
+  # Wire Add(3, out) to 2 and collect at Result(out)
+  Add(three, out) ~ two
+  Result(out)`,
+
+        boolean: `# System 3: Boolean Logic
+# Agents: True (0), False (0), And (2), Or (2), Not (1), Result (1).
+# Sample net: NOT (TRUE AND FALSE), reducing to True.
+
+agent True 0     -- boolean true
+agent False 0    -- boolean false
+agent And 2      -- logical AND: principal (1st arg) + aux1 (2nd arg) + aux2 (out)
+agent Or 2       -- logical OR:  principal (1st arg) + aux1 (2nd arg) + aux2 (out)
+agent Not 1      -- logical NOT: principal (input) + aux1 (negated output)
+agent Result 1   -- readout collector: aux1 holds the final boolean value
+
+rule And(y, r) >< True():
+  y ~ r
+
+rule And(y, r) >< False():
+  False() ~ y
+  False() ~ r
+
+rule Or(y, r) >< False():
+  y ~ r
+
+rule Or(y, r) >< True():
+  True() ~ y
+  True() ~ r
+
+rule Not(r) >< True():
+  False() ~ r
+
+rule Not(r) >< False():
+  True() ~ r
+
+rule True() >< True():
+  -- absorbed short-circuit boolean vanishes
+
+rule False() >< False():
+  -- absorbed short-circuit boolean vanishes
+
+rule True() >< False():
+  -- absorbed short-circuit boolean vanishes
+
+# Sample net: NOT (TRUE AND FALSE) -> NOT (FALSE) -> True
+net main:
+  True() ~ t
+  False() ~ f
+  And(f, and_out) ~ t
+  Not(res) ~ and_out
+  Result(res)`,
+
+        lists: `# System 4: List Operations (Map Doubling over Peano List [1, 2, 3])
+# Agents: Nil (0), Cons (2), Map (2), Z (0), S (1), Double (1), Result (1).
+# Maps Double(x) = 2*x over [1, 2, 3] to produce [2, 4, 6].
+
+agent Nil 0      -- empty list constructor
+agent Cons 2     -- list cell: principal (list) + aux1 (head) + aux2 (tail)
+agent Map 2      -- list mapper: principal (input list) + aux1 (base nil) + aux2 (output list)
+agent Z 0        -- Peano zero
+agent S 1        -- Peano successor
+agent Double 1   -- doubling function: principal (input nat) + aux1 (doubled nat)
+agent Result 1   -- readout collector: aux1 holds the mapped list [2, 4, 6]
+
+rule Map(fn_nil, out) >< Cons(h, t):
+  Double(h2) ~ h
+  Map(fn_nil, t2) ~ t
+  Cons(h2, t2) ~ out
+
+rule Map(fn_nil, out) >< Nil():
+  fn_nil ~ out
+
+rule Double(r) >< S(x):
+  Double(r1) ~ x
+  S(r1) ~ r2
+  S(r2) ~ r
+
+rule Double(r) >< Z():
+  Z() ~ r
+
+# Sample net: Map Double over [1, 2, 3] -> [2, 4, 6]
+net main:
+  # Element 1 = S(Z)
+  Z() ~ n1_0
+  S(n1_0) ~ e1
+
+  # Element 2 = S(S(Z))
+  Z() ~ n2_0
+  S(n2_0) ~ n2_1
+  S(n2_1) ~ e2
+
+  # Element 3 = S(S(S(Z)))
+  Z() ~ n3_0
+  S(n3_0) ~ n3_1
+  S(n3_1) ~ n3_2
+  S(n3_2) ~ e3
+
+  # Input list [1, 2, 3]
+  Nil() ~ l0
+  Cons(e3, l0) ~ l1
+  Cons(e2, l1) ~ l2
+  Cons(e1, l2) ~ list_in
+
+  # Apply Map and collect result
+  Nil() ~ base_nil
+  Map(base_nil, list_out) ~ list_in
+  Result(list_out)`
+      };
+
+      // =========================================================================
+      // 2. PARSER & VALIDATOR
+      // =========================================================================
+
+      function stripComments(line) {
+        let s = line;
+        const hashIdx = s.indexOf('#');
+        if (hashIdx !== -1) s = s.slice(0, hashIdx);
+        const dashIdx = s.indexOf('--');
+        if (dashIdx !== -1) s = s.slice(0, dashIdx);
+        return s.trim();
+      }
+
+      function isValidIdentifier(name) {
+        return typeof name === 'string' && name.length > 0 && /^[^\s(),~><:#\-]+$/.test(name);
+      }
+
+      // Parse an agent term like "γ(x1, x2)" or "ε()"
+      function parseAgentTerm(expr, lineNum, errors) {
+        const m = expr.match(/^([^\s(),~><:]+)\s*\((.*)\)$/);
+        if (!m) return null;
+        const agentName = m[1].trim();
+        const inner = m[2].trim();
+        let args = [];
+        if (inner.length > 0) {
+          args = inner.split(',').map(a => a.trim());
+          for (const a of args) {
+            if (!isValidIdentifier(a)) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Invalid wire name '${a}' in agent expression '${expr}'.`
+              });
+              return null;
+            }
+          }
+        }
+        return { kind: 'agent', name: agentName, args, line: lineNum };
+      }
+
+      // Parse either an agent term "A(x, y)" or a bare wire identifier "w"
+      function parseEndpointExpr(expr, lineNum, errors) {
+        const trimmed = expr.trim();
+        if (trimmed.includes('(') || trimmed.includes(')')) {
+          const term = parseAgentTerm(trimmed, lineNum, errors);
+          if (!term) {
+            if (!errors.some(e => e.line === lineNum)) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Malformed agent expression '${trimmed}'.`
+              });
+            }
+            return null;
+          }
+          return term;
+        }
+        if (!isValidIdentifier(trimmed)) {
+          errors.push({
+            line: lineNum,
+            type: 'syntax_error',
+            message: `Line ${lineNum}: Invalid wire identifier '${trimmed}'.`
+          });
+          return null;
+        }
+        return { kind: 'wire', name: trimmed, line: lineNum };
+      }
+
+      function canonicalRuleKey(agentA, agentB) {
+        return [agentA, agentB].sort().join('><');
+      }
+
+      /**
+       * Parses a Lafont Box program into:
+       *  - agents: Map<name, arity>
+       *  - rules: Map<canonicalKey, RuleDef>
+       *  - netDef: { name, statements }
+       *  - errors: Array<{ line, type, message }>
+       */
+      function parseProgram(sourceText) {
+        const errors = [];
+        const agents = new Map();
+        const rules = new Map();
+        let currentBlock = null; // { type: 'rule' | 'net', ... }
+        let netDef = null;
+
+        const rawLines = String(sourceText || '').split(/\r?\n/);
+
+        for (let idx = 0; idx < rawLines.length; idx++) {
+          const lineNum = idx + 1;
+          const cleaned = stripComments(rawLines[idx]);
+          if (!cleaned) continue;
+
+          // 1. Agent declaration: "agent <Name> <Arity>"
+          if (/^agent\b/.test(cleaned)) {
+            currentBlock = null;
+            const parts = cleaned.split(/\s+/);
+            if (parts.length !== 3) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Syntax error in agent declaration '${cleaned}'. Expected 'agent <name> <arity>'.`
+              });
+              continue;
+            }
+            const name = parts[1];
+            const arityNum = Number(parts[2]);
+            if (!isValidIdentifier(name)) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Invalid agent name '${name}'.`
+              });
+              continue;
+            }
+            if (!Number.isInteger(arityNum) || arityNum < 0) {
+              errors.push({
+                line: lineNum,
+                type: 'invalid_arity',
+                message: `Line ${lineNum}: Invalid arity '${parts[2]}' for agent '${name}'. Arity must be a non-negative integer.`
+              });
+              continue;
+            }
+            if (agents.has(name)) {
+              errors.push({
+                line: lineNum,
+                type: 'duplicate_agent',
+                message: `Line ${lineNum}: Duplicate agent declaration for '${name}'.`
+              });
+              continue;
+            }
+            agents.set(name, arityNum);
+            continue;
+          }
+
+          // 2. Rule header: "rule A(x1, ...) >< B(y1, ...):"
+          if (/^rule\b/.test(cleaned)) {
+            const m = cleaned.match(/^rule\s+(.+?)\s*><\s*(.+?)\s*:\s*$/);
+            if (!m) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Malformed rule header '${cleaned}'. Expected 'rule A(...) >< B(...):'.`
+              });
+              currentBlock = null;
+              continue;
+            }
+            const leftTerm = parseAgentTerm(m[1].trim(), lineNum, errors);
+            const rightTerm = parseAgentTerm(m[2].trim(), lineNum, errors);
+            if (!leftTerm || !rightTerm) {
+              currentBlock = null;
+              continue;
+            }
+
+            const ruleObj = {
+              line: lineNum,
+              left: leftTerm,
+              right: rightTerm,
+              statements: []
+            };
+            currentBlock = { type: 'rule', rule: ruleObj };
+
+            const key = canonicalRuleKey(leftTerm.name, rightTerm.name);
+            if (rules.has(key)) {
+              const prev = rules.get(key);
+              errors.push({
+                line: lineNum,
+                type: 'duplicate_rule',
+                message: `Line ${lineNum}: Duplicate rule for active pair '${leftTerm.name} >< ${rightTerm.name}' (already defined on line ${prev.line}; rules are symmetric).`
+              });
+            } else {
+              rules.set(key, ruleObj);
+            }
+            continue;
+          }
+
+          // 3. Net header: "net <name>:"
+          if (/^net\b/.test(cleaned)) {
+            const m = cleaned.match(/^net\s+([A-Za-z0-9_]+)\s*:\s*$/);
+            if (!m) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Malformed net header '${cleaned}'. Expected 'net <name>:'.`
+              });
+              currentBlock = null;
+              continue;
+            }
+            if (netDef) {
+              errors.push({
+                line: lineNum,
+                type: 'duplicate_net',
+                message: `Line ${lineNum}: Multiple net blocks defined ('${m[1]}' after '${netDef.name}').`
+              });
+            }
+            netDef = {
+              name: m[1],
+              line: lineNum,
+              statements: []
+            };
+            currentBlock = { type: 'net', net: netDef };
+            continue;
+          }
+
+          // 4. Statement inside current rule or net block
+          if (!currentBlock) {
+            errors.push({
+              line: lineNum,
+              type: 'syntax_error',
+              message: `Line ${lineNum}: Unexpected statement '${cleaned}' outside of a 'rule' or 'net' block.`
+            });
+            continue;
+          }
+
+          const targetList = currentBlock.type === 'rule'
+            ? currentBlock.rule.statements
+            : currentBlock.net.statements;
+
+          // Parse statement forms:
+          // Form A: LHS >< RHS
+          if (cleaned.includes('><')) {
+            const parts = cleaned.split('><');
+            if (parts.length !== 2) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Invalid active pair statement '${cleaned}'.`
+              });
+              continue;
+            }
+            const lhs = parseAgentTerm(parts[0].trim(), lineNum, errors);
+            const rhs = parseAgentTerm(parts[1].trim(), lineNum, errors);
+            if (!lhs || !rhs) {
+              if (!errors.some(e => e.line === lineNum)) {
+                errors.push({
+                  line: lineNum,
+                  type: 'syntax_error',
+                  message: `Line ${lineNum}: Both sides of '><' must be agent expressions 'A(...) >< B(...)'.`
+                });
+              }
+              continue;
+            }
+            targetList.push({ kind: 'active_pair', lhs, rhs, line: lineNum });
+            continue;
+          }
+
+          // Form B: LHS ~ RHS
+          if (cleaned.includes('~')) {
+            const parts = cleaned.split('~');
+            if (parts.length !== 2) {
+              errors.push({
+                line: lineNum,
+                type: 'syntax_error',
+                message: `Line ${lineNum}: Invalid wire connection '${cleaned}'. Expected 'LHS ~ RHS'.`
+              });
+              continue;
+            }
+            const lhs = parseEndpointExpr(parts[0], lineNum, errors);
+            const rhs = parseEndpointExpr(parts[1], lineNum, errors);
+            if (!lhs || !rhs) continue;
+            targetList.push({ kind: 'link', lhs, rhs, line: lineNum });
+            continue;
+          }
+
+          // Form C: Standalone agent expression "Result(out)" (root/interface agent with arity >= 1)
+          if (cleaned.includes('(') && cleaned.endsWith(')')) {
+            const term = parseAgentTerm(cleaned, lineNum, errors);
+            if (term) {
+              targetList.push({ kind: 'standalone_agent', agent: term, line: lineNum });
+              continue;
+            }
+          }
+
+          errors.push({
+            line: lineNum,
+            type: 'syntax_error',
+            message: `Line ${lineNum}: Unrecognized statement '${cleaned}'.`
+          });
+        }
+
+        // Validate agent existence, arities, and wire counts in all rules
+        for (const [, ruleObj] of rules) {
+          validateRule(ruleObj, agents, errors);
+        }
+
+        // Validate net block
+        if (!netDef) {
+          errors.push({
+            line: rawLines.length || 1,
+            type: 'missing_net',
+            message: `Missing 'net main:' block.`
+          });
+        } else {
+          validateNet(netDef, agents, errors);
+        }
+
+        if (errors.length > 0) {
+          return { ok: false, errors, agents, rules, netDef, net: null };
+        }
+
+        const net = instantiateInitialNet(agents, rules, netDef);
+        return { ok: true, errors: [], agents, rules, netDef, net };
+      }
+
+      function checkAgentTermArity(term, agents, errors) {
+        if (!agents.has(term.name)) {
+          errors.push({
+            line: term.line,
+            type: 'unknown_agent',
+            message: `Line ${term.line}: Unknown agent type '${term.name}' (not declared with 'agent').`
+          });
+          return false;
+        }
+        const expected = agents.get(term.name);
+        if (term.args.length !== expected) {
+          errors.push({
+            line: term.line,
+            type: 'arity_mismatch',
+            message: `Line ${term.line}: Mismatched arity for agent '${term.name}': expected ${expected} auxiliary port(s), got ${term.args.length}.`
+          });
+          return false;
+        }
+        return true;
+      }
+
+      function recordWireUse(wireMap, wireName, lineNum) {
+        if (!wireMap.has(wireName)) {
+          wireMap.set(wireName, { count: 0, lines: [] });
+        }
+        const entry = wireMap.get(wireName);
+        entry.count += 1;
+        entry.lines.push(lineNum);
+      }
+
+      function validateStatementsAndWires(statements, agents, wireMap, errors, contextLabel) {
+        for (const stmt of statements) {
+          if (stmt.kind === 'active_pair') {
+            checkAgentTermArity(stmt.lhs, agents, errors);
+            checkAgentTermArity(stmt.rhs, agents, errors);
+            for (const w of stmt.lhs.args) recordWireUse(wireMap, w, stmt.line);
+            for (const w of stmt.rhs.args) recordWireUse(wireMap, w, stmt.line);
+          } else if (stmt.kind === 'link') {
+            for (const side of [stmt.lhs, stmt.rhs]) {
+              if (side.kind === 'agent') {
+                checkAgentTermArity(side, agents, errors);
+                for (const w of side.args) recordWireUse(wireMap, w, stmt.line);
+              } else if (side.kind === 'wire') {
+                recordWireUse(wireMap, side.name, stmt.line);
+              }
+            }
+          } else if (stmt.kind === 'standalone_agent') {
+            const ok = checkAgentTermArity(stmt.agent, agents, errors);
+            if (ok && stmt.agent.args.length === 0) {
+              errors.push({
+                line: stmt.line,
+                type: 'dangling_wire',
+                message: `Line ${stmt.line}: Agent '${stmt.agent.name}()' has arity 0 and an unconnected principal port (dangling port).`
+              });
+            }
+            for (const w of stmt.agent.args) recordWireUse(wireMap, w, stmt.line);
+          }
+        }
+
+        for (const [wireName, info] of wireMap.entries()) {
+          if (info.count !== 2) {
+            const problem = info.count < 2 ? 'dangling wire' : 'wire used more than twice';
+            errors.push({
+              line: info.lines[0],
+              type: 'dangling_wire',
+              message: `Line ${info.lines[0]}: Wire '${wireName}' in ${contextLabel} appears ${info.count} time(s), expected exactly 2 (${problem}).`
+            });
+          }
+        }
+      }
+
+      function validateRule(ruleObj, agents, errors) {
+        checkAgentTermArity(ruleObj.left, agents, errors);
+        checkAgentTermArity(ruleObj.right, agents, errors);
+
+        const wireMap = new Map();
+        const headerSeen = new Set();
+        for (const w of [...ruleObj.left.args, ...ruleObj.right.args]) {
+          if (headerSeen.has(w)) {
+            errors.push({
+              line: ruleObj.line,
+              type: 'dangling_wire',
+              message: `Line ${ruleObj.line}: Duplicate port variable '${w}' in rule header '${ruleObj.left.name} >< ${ruleObj.right.name}'.`
+            });
+          }
+          headerSeen.add(w);
+          recordWireUse(wireMap, w, ruleObj.line);
+        }
+
+        validateStatementsAndWires(
+          ruleObj.statements,
+          agents,
+          wireMap,
+          errors,
+          `rule '${ruleObj.left.name} >< ${ruleObj.right.name}'`
+        );
+      }
+
+      function validateNet(netDef, agents, errors) {
+        const wireMap = new Map();
+        validateStatementsAndWires(
+          netDef.statements,
+          agents,
+          wireMap,
+          errors,
+          `net '${netDef.name}'`
+        );
+      }
+
+      // =========================================================================
+      // 3. WIRING RESOLUTION & GRAPH INSTANTIATION
+      // =========================================================================
+
+      /**
+       * Resolves a system of degree-1 RealPort endpoints and degree-2 WireVertices
+       * linked by undirected edges into direct port-to-port connections and closed loop count.
+       */
+      function contractWireGraph(realPorts, adj) {
+        const visitedVertices = new Set();
+        const portPairs = [];
+
+        // 1. Walk paths starting from each degree-1 RealPort
+        for (const startKey of realPorts.keys()) {
+          if (visitedVertices.has(startKey)) continue;
+          visitedVertices.add(startKey);
+
+          const neighbors = adj.get(startKey) || [];
+          if (neighbors.length === 0) continue;
+
+          let prev = startKey;
+          let curr = neighbors[0];
+
+          while (curr && !realPorts.has(curr)) {
+            visitedVertices.add(curr);
+            const nextCandidates = adj.get(curr) || [];
+            let next = null;
+            for (const cand of nextCandidates) {
+              if (cand !== prev) {
+                next = cand;
+                break;
+              }
+            }
+            // Handle 2-edge multigraph cycle if needed
+            if (next === null && nextCandidates.length >= 2) {
+              next = nextCandidates[0];
+            }
+            prev = curr;
+            curr = next;
+          }
+
+          if (curr && realPorts.has(curr)) {
+            visitedVertices.add(curr);
+            portPairs.push([realPorts.get(startKey), realPorts.get(curr)]);
+          }
+        }
+
+        // 2. Count any remaining unvisited closed cycles of wire vertices
+        let freeLoops = 0;
+        for (const vKey of adj.keys()) {
+          if (visitedVertices.has(vKey) || realPorts.has(vKey)) continue;
+          freeLoops += 1;
+          const stack = [vKey];
+          visitedVertices.add(vKey);
+          while (stack.length > 0) {
+            const u = stack.pop();
+            for (const nb of (adj.get(u) || [])) {
+              if (!visitedVertices.has(nb)) {
+                visitedVertices.add(nb);
+                stack.push(nb);
+              }
+            }
+          }
+        }
+
+        return { portPairs, freeLoops };
+      }
+
+      function addEdge(adj, u, v) {
+        if (!adj.has(u)) adj.set(u, []);
+        if (!adj.has(v)) adj.set(v, []);
+        adj.get(u).push(v);
+        adj.get(v).push(u);
+      }
+
+      function instantiateInitialNet(agents, rules, netDef) {
+        const nodes = new Map();
+        let nextNodeId = 1;
+
+        const realPorts = new Map(); // vertexKey -> { nodeId, port }
+        const adj = new Map();
+
+        function createNode(agentTerm) {
+          const id = nextNodeId++;
+          const arity = agents.get(agentTerm.name);
+          const node = {
+            id,
+            type: agentTerm.name,
+            arity,
+            ports: new Array(arity + 1).fill(null),
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0
+          };
+          nodes.set(id, node);
+
+          for (let i = 0; i < agentTerm.args.length; i++) {
+            const wireName = agentTerm.args[i];
+            const pKey = `P:${id}:${i + 1}`;
+            realPorts.set(pKey, { nodeId: id, port: i + 1 });
+            addEdge(adj, pKey, `W:${wireName}`);
+          }
+          return node;
+        }
+
+        for (const stmt of netDef.statements) {
+          if (stmt.kind === 'active_pair') {
+            const n1 = createNode(stmt.lhs);
+            const n2 = createNode(stmt.rhs);
+            const p1 = `P:${n1.id}:0`;
+            const p2 = `P:${n2.id}:0`;
+            realPorts.set(p1, { nodeId: n1.id, port: 0 });
+            realPorts.set(p2, { nodeId: n2.id, port: 0 });
+            addEdge(adj, p1, p2);
+          } else if (stmt.kind === 'link') {
+            const endKeys = [];
+            for (const side of [stmt.lhs, stmt.rhs]) {
+              if (side.kind === 'agent') {
+                const n = createNode(side);
+                const p0 = `P:${n.id}:0`;
+                realPorts.set(p0, { nodeId: n.id, port: 0 });
+                endKeys.push(p0);
+              } else {
+                endKeys.push(`W:${side.name}`);
+              }
+            }
+            addEdge(adj, endKeys[0], endKeys[1]);
+          } else if (stmt.kind === 'standalone_agent') {
+            createNode(stmt.agent);
+            // Principal port 0 remains null (root interface port)
+          }
+        }
+
+        const { portPairs, freeLoops } = contractWireGraph(realPorts, adj);
+        for (const [a, b] of portPairs) {
+          const nodeA = nodes.get(a.nodeId);
+          const nodeB = nodes.get(b.nodeId);
+          nodeA.ports[a.port] = { nodeId: b.nodeId, port: b.port };
+          nodeB.ports[b.port] = { nodeId: a.nodeId, port: a.port };
+        }
+
+        const net = {
+          agents,
+          rules,
+          nodes,
+          nextNodeId,
+          steps: 0,
+          freeLoops,
+          lastRuleFired: null
+        };
+
+        initializeLayout(net);
+        return net;
+      }
+
+      /**
+       * Creates an interaction net directly from agent/wire arrays (for programmatic tests).
+       *
+       * Format:
+       *  - agentTypes: { [name]: arity }
+       *  - rules: Array of rule strings or parsed rule defs, OR source text for rules
+       *  - nodes: Array<{ id, type }>
+       *  - wires: Array<[ [id1, port1], [id2, port2] ]>
+       */
+      function createNetFromArrays(spec) {
+        const agents = new Map(Object.entries(spec.agentTypes || {}));
+        let rules = new Map();
+
+        if (typeof spec.rulesText === 'string' && spec.rulesText.trim().length > 0) {
+          const headerLines = [];
+          for (const [name, arity] of agents.entries()) {
+            headerLines.push(`agent ${name} ${arity}`);
+          }
+          const dummySource = `${headerLines.join('\n')}\n${spec.rulesText}\nnet main:\n`;
+          const parsed = parseProgram(dummySource);
+          rules = parsed.rules;
+        } else if (spec.rules instanceof Map) {
+          rules = spec.rules;
+        }
+
+        const nodes = new Map();
+        let maxId = 0;
+        for (const n of (spec.nodes || [])) {
+          const arity = agents.get(n.type);
+          if (arity === undefined) {
+            throw new Error(`Unknown agent type '${n.type}' in createNetFromArrays.`);
+          }
+          if (n.id > maxId) maxId = n.id;
+          nodes.set(n.id, {
+            id: n.id,
+            type: n.type,
+            arity,
+            ports: new Array(arity + 1).fill(null),
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0
+          });
+        }
+
+        for (const [endA, endB] of (spec.wires || [])) {
+          const [idA, portA] = endA;
+          const [idB, portB] = endB;
+          const nodeA = nodes.get(idA);
+          const nodeB = nodes.get(idB);
+          if (!nodeA || !nodeB) {
+            throw new Error(`Wire references unknown node ID (${idA} or ${idB}).`);
+          }
+          nodeA.ports[portA] = { nodeId: idB, port: portB };
+          nodeB.ports[portB] = { nodeId: idA, port: portA };
+        }
+
+        const net = {
+          agents,
+          rules,
+          nodes,
+          nextNodeId: maxId + 1,
+          steps: 0,
+          freeLoops: 0,
+          lastRuleFired: null
+        };
+        initializeLayout(net);
+        return net;
+      }
+
+      // =========================================================================
+      // 4. ACTIVE PAIR DISCOVERY & REDUCTION ENGINE
+      // =========================================================================
+
+      /**
+       * Returns all active pairs in deterministic order.
+       * Two distinct agents connected at their principal ports (port 0 <-> port 0)
+       * that have a defined reduction rule form an active pair.
+       */
+      function findActivePairs(net) {
+        const pairs = [];
+        const seen = new Set();
+
+        const sortedIds = Array.from(net.nodes.keys()).sort((a, b) => a - b);
+        for (const idA of sortedIds) {
+          if (seen.has(idA)) continue;
+          const nodeA = net.nodes.get(idA);
+          if (!nodeA) continue;
+          const p0 = nodeA.ports[0];
+          if (!p0 || p0.port !== 0 || p0.nodeId === idA) continue;
+
+          const idB = p0.nodeId;
+          const nodeB = net.nodes.get(idB);
+          if (!nodeB) continue;
+
+          const key = canonicalRuleKey(nodeA.type, nodeB.type);
+          if (!net.rules.has(key)) continue;
+
+          seen.add(idA);
+          seen.add(idB);
+          const [lo, hi] = idA < idB ? [nodeA, nodeB] : [nodeB, nodeA];
+          pairs.push({
+            id: `${lo.id}><${hi.id}`,
+            nodeA: lo,
+            nodeB: hi,
+            ruleKey: key
+          });
+        }
+
+        return pairs;
+      }
+
+      /**
+       * Fires a single active pair (nodeA >< nodeB) in place on `net`.
+       */
+      function fireActivePair(net, pair) {
+        const rawA = net.nodes.get(pair.nodeA.id);
+        const rawB = net.nodes.get(pair.nodeB.id);
+        if (!rawA || !rawB) return false;
+        if (!rawA.ports[0] || rawA.ports[0].nodeId !== rawB.id || rawA.ports[0].port !== 0) {
+          return false;
+        }
+
+        const key = canonicalRuleKey(rawA.type, rawB.type);
+        const ruleObj = net.rules.get(key);
+        if (!ruleObj) return false;
+
+        // Orient (leftNode, rightNode) to match the rule definition header
+        let leftNode = rawA;
+        let rightNode = rawB;
+        if (rawA.type !== ruleObj.left.name || rawB.type !== ruleObj.right.name) {
+          leftNode = rawB;
+          rightNode = rawA;
+        }
+
+        const centerX = (leftNode.x + rightNode.x) * 0.5;
+        const centerY = (leftNode.y + rightNode.y) * 0.5;
+
+        const firingIds = new Set([leftNode.id, rightNode.id]);
+        const realPorts = new Map();
+        const adj = new Map();
+
+        // 1. Connect boundary placeholders B:L:1..n and B:R:1..m to external neighbors in old net
+        function attachOldBoundary(sideTag, node) {
+          for (let i = 1; i <= node.arity; i++) {
+            const bKey = `B:${sideTag}:${i}`;
+            const conn = node.ports[i];
+            if (!conn) continue;
+
+            if (!firingIds.has(conn.nodeId)) {
+              const extKey = `EXT:${conn.nodeId}:${conn.port}`;
+              realPorts.set(extKey, { nodeId: conn.nodeId, port: conn.port });
+              addEdge(adj, bKey, extKey);
+            } else {
+              // Connected directly to another auxiliary port on leftNode or rightNode
+              const otherSide = conn.nodeId === leftNode.id ? 'L' : 'R';
+              const otherBKey = `B:${otherSide}:${conn.port}`;
+              if (bKey < otherBKey) {
+                addEdge(adj, bKey, otherBKey);
+              }
+            }
+          }
+        }
+
+        attachOldBoundary('L', leftNode);
+        attachOldBoundary('R', rightNode);
+
+        // 2. Connect boundary placeholders to rule header wire names
+        for (let i = 0; i < ruleObj.left.args.length; i++) {
+          addEdge(adj, `B:L:${i + 1}`, `W:${ruleObj.left.args[i]}`);
+        }
+        for (let j = 0; j < ruleObj.right.args.length; j++) {
+          addEdge(adj, `B:R:${j + 1}`, `W:${ruleObj.right.args[j]}`);
+        }
+
+        // 3. Instantiate replacement nodes from rule body
+        const newNodes = [];
+        function spawnReplacementNode(agentTerm) {
+          const id = net.nextNodeId++;
+          const arity = net.agents.get(agentTerm.name);
+          const idx = newNodes.length;
+          const angle = (idx * 2.39996) + 0.4;
+          const radius = 26 + idx * 10;
+          const node = {
+            id,
+            type: agentTerm.name,
+            arity,
+            ports: new Array(arity + 1).fill(null),
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius,
+            vx: 0,
+            vy: 0,
+            bornAtStep: net.steps + 1
+          };
+          net.nodes.set(id, node);
+          newNodes.push(node);
+
+          for (let i = 0; i < agentTerm.args.length; i++) {
+            const pKey = `NEW:${id}:${i + 1}`;
+            realPorts.set(pKey, { nodeId: id, port: i + 1 });
+            addEdge(adj, pKey, `W:${agentTerm.args[i]}`);
+          }
+          return node;
+        }
+
+        for (const stmt of ruleObj.statements) {
+          if (stmt.kind === 'active_pair') {
+            const n1 = spawnReplacementNode(stmt.lhs);
+            const n2 = spawnReplacementNode(stmt.rhs);
+            const p1 = `NEW:${n1.id}:0`;
+            const p2 = `NEW:${n2.id}:0`;
+            realPorts.set(p1, { nodeId: n1.id, port: 0 });
+            realPorts.set(p2, { nodeId: n2.id, port: 0 });
+            addEdge(adj, p1, p2);
+          } else if (stmt.kind === 'link') {
+            const ends = [];
+            for (const side of [stmt.lhs, stmt.rhs]) {
+              if (side.kind === 'agent') {
+                const n = spawnReplacementNode(side);
+                const p0 = `NEW:${n.id}:0`;
+                realPorts.set(p0, { nodeId: n.id, port: 0 });
+                ends.push(p0);
+              } else {
+                ends.push(`W:${side.name}`);
+              }
+            }
+            addEdge(adj, ends[0], ends[1]);
+          } else if (stmt.kind === 'standalone_agent') {
+            spawnReplacementNode(stmt.agent);
+          }
+        }
+
+        // 4. Contract degree-2 paths and rewire surviving/new ports
+        const { portPairs, freeLoops } = contractWireGraph(realPorts, adj);
+        for (const [a, b] of portPairs) {
+          const nA = net.nodes.get(a.nodeId);
+          const nB = net.nodes.get(b.nodeId);
+          if (nA && nB) {
+            nA.ports[a.port] = { nodeId: b.nodeId, port: b.port };
+            nB.ports[b.port] = { nodeId: a.nodeId, port: a.port };
+          }
+        }
+
+        // 5. Remove the two fired nodes
+        net.nodes.delete(leftNode.id);
+        net.nodes.delete(rightNode.id);
+
+        net.steps += 1;
+        net.freeLoops += freeLoops;
+        net.lastRuleFired = `${ruleObj.left.name} >< ${ruleObj.right.name}`;
+        return true;
+      }
+
+      /**
+       * Fires one active pair (either specified by index/id, or the first/leftmost found).
+       */
+      function stepOne(net, pairSelector) {
+        const pairs = findActivePairs(net);
+        if (pairs.length === 0) return { fired: false, remaining: 0 };
+
+        let chosen = pairs[0];
+        if (typeof pairSelector === 'number') {
+          chosen = pairs[((pairSelector % pairs.length) + pairs.length) % pairs.length];
+        } else if (typeof pairSelector === 'string') {
+          const match = pairs.find(p => p.id === pairSelector);
+          if (match) chosen = match;
+        } else if (typeof pairSelector === 'function') {
+          const match = pairSelector(pairs);
+          if (match) chosen = match;
+        } else {
+          // Default in visual workbench: pick leftmost (smallest average X, tie-broken by ID)
+          chosen = pairs.slice().sort((p1, p2) => {
+            const x1 = (p1.nodeA.x + p1.nodeB.x) * 0.5;
+            const x2 = (p2.nodeA.x + p2.nodeB.x) * 0.5;
+            if (Math.abs(x1 - x2) > 1e-3) return x1 - x2;
+            return p1.nodeA.id - p2.nodeA.id;
+          })[0];
+        }
+
+        const ok = fireActivePair(net, chosen);
+        return {
+          fired: ok,
+          pair: chosen,
+          remaining: findActivePairs(net).length
+        };
+      }
+
+      /**
+       * Fires all currently present active pairs simultaneously (1 parallel wave).
+       * Because every port has exactly one wire, distinct active pairs (which meet at their
+       * unique principal ports) are strictly disjoint sets of nodes!
+       */
+      function stepAllParallel(net) {
+        const snapshotPairs = findActivePairs(net);
+        if (snapshotPairs.length === 0) return { firedCount: 0, remaining: 0 };
+
+        let firedCount = 0;
+        const rulesFired = [];
+        for (const pair of snapshotPairs) {
+          if (fireActivePair(net, pair)) {
+            firedCount += 1;
+            rulesFired.push(net.lastRuleFired);
+          }
+        }
+        if (rulesFired.length > 1) {
+          net.lastRuleFired = `Parallel [${rulesFired.join(', ')}]`;
+        }
+        return {
+          firedCount,
+          remaining: findActivePairs(net).length
+        };
+      }
+
+      /**
+       * Reduces a net to normal form up to `maxSteps`.
+       * Optional `strategy`:
+       *  - 'first' (smallest ID first)
+       *  - 'last' (largest ID first)
+       *  - 'parallel' (stepAllParallel waves)
+       *  - function(pairs, stepIdx) -> chosenPair
+       */
+      function reduceToNormalForm(net, options = {}) {
+        const maxSteps = options.maxSteps || 2000;
+        const strategy = options.strategy || 'first';
+        let iterations = 0;
+
+        while (iterations < maxSteps) {
+          const pairs = findActivePairs(net);
+          if (pairs.length === 0) break;
+
+          if (strategy === 'parallel') {
+            stepAllParallel(net);
+          } else if (strategy === 'last') {
+            fireActivePair(net, pairs[pairs.length - 1]);
+          } else if (typeof strategy === 'function') {
+            const pick = strategy(pairs, iterations);
+            fireActivePair(net, pick || pairs[0]);
+          } else {
+            fireActivePair(net, pairs[0]);
+          }
+          iterations += 1;
+        }
+
+        const remaining = findActivePairs(net).length;
+        return {
+          normalForm: remaining === 0,
+          steps: net.steps,
+          iterations,
+          remainingActivePairs: remaining
+        };
+      }
+
+      // =========================================================================
+      // 5. TELEMETRY, MULTISET & CANONICAL NORMAL-FORM SIGNATURES
+      // =========================================================================
+
+      function countWires(net) {
+        let halfEdges = 0;
+        let selfPortLoops = 0;
+        for (const node of net.nodes.values()) {
+          for (let p = 0; p < node.ports.length; p++) {
+            const conn = node.ports[p];
+            if (conn) {
+              if (conn.nodeId === node.id && conn.port === p) {
+                selfPortLoops += 1;
+              } else {
+                halfEdges += 1;
+              }
+            }
+          }
+        }
+        return (halfEdges / 2) + selfPortLoops + (net.freeLoops || 0);
+      }
+
+      function getStats(net) {
+        const activePairs = findActivePairs(net).length;
+        return {
+          steps: net.steps,
+          activePairs,
+          agents: net.nodes.size,
+          wires: countWires(net),
+          normalForm: activePairs === 0
+        };
+      }
+
+      /**
+       * Returns a deterministic sorted multiset of agents with their port connections
+       * (sorted by agent name and port neighbor descriptors, independent of node IDs or layout).
+       */
+      function getAgentMultiset(net) {
+        const items = [];
+        for (const node of net.nodes.values()) {
+          const portDescs = node.ports.map((conn, pIdx) => {
+            if (!conn) return `p${pIdx}:FREE`;
+            if (conn.nodeId === node.id) return `p${pIdx}->SELF:p${conn.port}`;
+            const other = net.nodes.get(conn.nodeId);
+            return `p${pIdx}->${other ? other.type : '?'}:p${conn.port}`;
+          });
+          items.push(`${node.type}(${portDescs.join(', ')})`);
+        }
+        items.sort();
+        return items;
+      }
+
+      /**
+       * Computes a Weisfeiler-Lehman canonical port-graph signature invariant to node IDs
+       * and spatial coordinates, distinguishing deep recursive structures (e.g. lists of Peano numerals).
+       */
+      function getCanonicalSignature(net) {
+        const nodeIds = Array.from(net.nodes.keys());
+        let colors = new Map();
+        for (const id of nodeIds) {
+          const n = net.nodes.get(id);
+          colors.set(id, `${n.type}/${n.arity}`);
+        }
+
+        const rounds = Math.max(2, nodeIds.length + 1);
+        for (let r = 0; r < rounds; r++) {
+          const nextColors = new Map();
+          for (const id of nodeIds) {
+            const n = net.nodes.get(id);
+            const portSigs = n.ports.map((conn, pIdx) => {
+              if (!conn) return `${pIdx}:FREE`;
+              if (conn.nodeId === id) return `${pIdx}:SELF:${conn.port}`;
+              return `${pIdx}:${colors.get(conn.nodeId)}@${conn.port}`;
+            });
+            nextColors.set(id, `${n.type}[${portSigs.join(';')}]`);
+          }
+          colors = nextColors;
+        }
+
+        const finalLabels = Array.from(colors.values()).sort();
+        return `agents=${net.nodes.size}|wires=${countWires(net)}|nodes=${finalLabels.join('||')}`;
+      }
+
+      /**
+       * Reads out Peano numeral / list / boolean values attached to `Result` (if present)
+       * for human-readable verification and testing.
+       */
+      function inspectResultValue(net) {
+        let resultNode = null;
+        for (const n of net.nodes.values()) {
+          if (n.type === 'Result') {
+            resultNode = n;
+            break;
+          }
+        }
+        if (!resultNode) return null;
+
+        const rootConn = resultNode.ports[1] || resultNode.ports[0];
+        if (!rootConn) return null;
+
+        function decodeAt(nodeId, visited) {
+          if (visited.has(nodeId)) return '<cycle>';
+          visited.add(nodeId);
+          const n = net.nodes.get(nodeId);
+          if (!n) return null;
+
+          if (n.type === 'Z') return 0;
+          if (n.type === 'S') {
+            const sub = n.ports[1] ? decodeAt(n.ports[1].nodeId, visited) : null;
+            return typeof sub === 'number' ? sub + 1 : `S(${sub})`;
+          }
+          if (n.type === 'True') return true;
+          if (n.type === 'False') return false;
+          if (n.type === 'Nil') return [];
+          if (n.type === 'Cons') {
+            const headVal = n.ports[1] ? decodeAt(n.ports[1].nodeId, new Set(visited)) : null;
+            const tailVal = n.ports[2] ? decodeAt(n.ports[2].nodeId, new Set(visited)) : null;
+            if (Array.isArray(tailVal)) return [headVal, ...tailVal];
+            return { head: headVal, tail: tailVal };
+          }
+          return n.type;
+        }
+
+        return decodeAt(rootConn.nodeId, new Set([resultNode.id]));
+      }
+
+      // =========================================================================
+      // 6. INITIAL TOPOLOGICAL / FORCE-DIRECTED LAYOUT
+      // =========================================================================
+
+      function getPortLocalOffset(node, portIdx, radius) {
+        const r = radius || 24;
+        if (portIdx === 0) {
+          return { dx: 0, dy: -r };
+        }
+        const n = node.arity;
+        if (n === 1) {
+          return { dx: 0, dy: r };
+        }
+        // Spread auxiliary ports 1..n along the bottom arc (+35 deg to +145 deg from +Y down)
+        const spread = Math.min(Math.PI * 0.72, 0.45 * n);
+        const t = n === 1 ? 0 : ((portIdx - 1) / (n - 1)) - 0.5;
+        const angle = t * spread; // 0 is straight down (0, +r)
+        return {
+          dx: Math.sin(angle) * r,
+          dy: Math.cos(angle) * r
+        };
+      }
+
+      function initializeLayout(net) {
+        const nodes = Array.from(net.nodes.values());
+        if (nodes.length === 0) return;
+
+        // BFS layering from Result or active pairs so hierarchical chains start untangled
+        const depth = new Map();
+        const queue = [];
+
+        for (const n of nodes) {
+          if (n.type === 'Result') {
+            depth.set(n.id, 0);
+            queue.push(n.id);
+          }
+        }
+        if (queue.length === 0) {
+          const pairs = findActivePairs(net);
+          for (const p of pairs) {
+            depth.set(p.nodeA.id, 1);
+            depth.set(p.nodeB.id, 2);
+            queue.push(p.nodeA.id, p.nodeB.id);
+          }
+        }
+        if (queue.length === 0 && nodes.length > 0) {
+          depth.set(nodes[0].id, 0);
+          queue.push(nodes[0].id);
+        }
+
+        while (queue.length > 0) {
+          const currId = queue.shift();
+          const currNode = net.nodes.get(currId);
+          const d = depth.get(currId) || 0;
+          if (!currNode) continue;
+
+          for (let p = 0; p < currNode.ports.length; p++) {
+            const conn = currNode.ports[p];
+            if (!conn || depth.has(conn.nodeId)) continue;
+            // Aux ports go downward (+1 depth), principal port goes upward (-1 depth)
+            const delta = p === 0 ? -1 : 1;
+            depth.set(conn.nodeId, d + delta);
+            queue.push(conn.nodeId);
+          }
+        }
+
+        for (const n of nodes) {
+          if (!depth.has(n.id)) depth.set(n.id, 0);
+        }
+
+        // Group nodes by layer depth
+        const layers = new Map();
+        for (const n of nodes) {
+          const d = depth.get(n.id);
+          if (!layers.has(d)) layers.set(d, []);
+          layers.get(d).push(n);
+        }
+
+        const sortedDepths = Array.from(layers.keys()).sort((a, b) => a - b);
+        const minD = sortedDepths[0] || 0;
+        const maxD = sortedDepths[sortedDepths.length - 1] || 0;
+        const midD = (minD + maxD) * 0.5;
+
+        for (const d of sortedDepths) {
+          const row = layers.get(d);
+          row.sort((a, b) => a.id - b.id);
+          const y = (d - midD) * 92;
+          for (let i = 0; i < row.length; i++) {
+            const x = (i - (row.length - 1) * 0.5) * 115;
+            row[i].x = x + ((row[i].id % 3) - 1) * 6;
+            row[i].y = y;
+            row[i].vx = 0;
+            row[i].vy = 0;
+          }
+        }
+
+        // Warm-up physics relaxation steps so initial net is clean immediately
+        for (let i = 0; i < 65; i++) {
+          stepLayoutPhysics(net, null);
+        }
+      }
+
+      function stepLayoutPhysics(net, pinnedNodeId) {
+        const nodes = Array.from(net.nodes.values());
+        const N = nodes.length;
+        if (N <= 1) return;
+
+        const NODE_RADIUS = 24;
+        const REPULSION = 7200;
+        const SPRING_K = 0.075;
+        const IDEAL_WIRE_LEN = 76;
+        const DAMPING = 0.78;
+
+        // 1. All-pairs Coulomb repulsion
+        for (let i = 0; i < N; i++) {
+          const a = nodes[i];
+          for (let j = i + 1; j < N; j++) {
+            const b = nodes[j];
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            let distSq = dx * dx + dy * dy;
+            if (distSq < 16) {
+              dx = (a.id < b.id ? -1 : 1) * 4;
+              dy = 4;
+              distSq = 32;
+            }
+            const dist = Math.sqrt(distSq);
+            const force = REPULSION / distSq;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            a.vx -= fx;
+            a.vy -= fy;
+            b.vx += fx;
+            b.vy += fy;
+          }
+        }
+
+        // 2. Port-aware Hooke spring attraction + vertical hierarchy torque
+        for (let i = 0; i < N; i++) {
+          const a = nodes[i];
+          for (let pA = 0; pA < a.ports.length; pA++) {
+            const conn = a.ports[pA];
+            if (!conn || conn.nodeId <= a.id) continue;
+            const b = net.nodes.get(conn.nodeId);
+            if (!b) continue;
+            const pB = conn.port;
+
+            const offA = getPortLocalOffset(a, pA, NODE_RADIUS);
+            const offB = getPortLocalOffset(b, pB, NODE_RADIUS);
+
+            const pxA = a.x + offA.dx;
+            const pyA = a.y + offA.dy;
+            const pxB = b.x + offB.dx;
+            const pyB = b.y + offB.dy;
+
+            const dx = pxB - pxA;
+            const dy = pyB - pyA;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const targetLen = (pA === 0 && pB === 0) ? 62 : IDEAL_WIRE_LEN;
+            const displacement = dist - targetLen;
+
+            const fx = (dx / dist) * displacement * SPRING_K;
+            const fy = (dy / dist) * displacement * SPRING_K;
+
+            a.vx += fx;
+            a.vy += fy;
+            b.vx -= fx;
+            b.vy -= fy;
+
+            // Gentle vertical orientation bias: aux port (bottom) wants to be above principal port (top)
+            if (pA > 0 && pB === 0) {
+              const targetDy = 72;
+              const orientForce = ((b.y - a.y) - targetDy) * 0.018;
+              a.vy += orientForce;
+              b.vy -= orientForce;
+            } else if (pA === 0 && pB > 0) {
+              const targetDy = 72;
+              const orientForce = ((a.y - b.y) - targetDy) * 0.018;
+              b.vy += orientForce;
+              a.vy -= orientForce;
+            }
+          }
+        }
+
+        // 3. Mild centering gravity and velocity integration
+        let cx = 0;
+        let cy = 0;
+        for (const n of nodes) {
+          cx += n.x;
+          cy += n.y;
+        }
+        cx /= N;
+        cy /= N;
+
+        for (const n of nodes) {
+          if (n.id === pinnedNodeId) {
+            n.vx = 0;
+            n.vy = 0;
+            continue;
+          }
+          n.vx = (n.vx - cx * 0.008) * DAMPING;
+          n.vy = (n.vy - cy * 0.008) * DAMPING;
+
+          const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+          if (speed > 14) {
+            n.vx = (n.vx / speed) * 14;
+            n.vy = (n.vy / speed) * 14;
+          }
+
+          n.x += n.vx;
+          n.y += n.vy;
+        }
+      }
+
+      const LafontEngine = {
+        EXAMPLES,
+        parseProgram,
+        createNetFromArrays,
+        findActivePairs,
+        fireActivePair,
+        stepOne,
+        stepAllParallel,
+        reduceToNormalForm,
+        countWires,
+        getStats,
+        getAgentMultiset,
+        getCanonicalSignature,
+        inspectResultValue,
+        getPortLocalOffset,
+        initializeLayout,
+        stepLayoutPhysics
+      };
+
+      root.LafontEngine = LafontEngine;
+      if (typeof module !== 'undefined' && module.exports) {
+        module.exports = LafontEngine;
+      }
+    })(typeof globalThis !== 'undefined' ? globalThis : window);
+  </script>
+
+  <!-- Browser UI & Canvas Renderer Script -->
+  <script>
+    (function () {
+      'use strict';
+
+      if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+      const Engine = window.LafontEngine;
+
+      // DOM elements
+      const exampleSelect = document.getElementById('example-select');
+      const codeEditor = document.getElementById('code-editor');
+      const lineNumbersEl = document.getElementById('line-numbers');
+      const diagnosticsEl = document.getElementById('diagnostics');
+      const editorStatusBadge = document.getElementById('editor-status-badge');
+      const canvas = document.getElementById('net-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const btnParse = document.getElementById('btn-parse');
+      const btnStep = document.getElementById('btn-step');
+      const btnStepAll = document.getElementById('btn-step-all');
+      const btnRun = document.getElementById('btn-run');
+      const btnReset = document.getElementById('btn-reset');
+      const btnFit = document.getElementById('btn-fit');
+      const speedSlider = document.getElementById('speed-slider');
+      const speedLabel = document.getElementById('speed-label');
+
+      const statSteps = document.getElementById('stat-steps');
+      const statActive = document.getElementById('stat-active');
+      const statAgents = document.getElementById('stat-agents');
+      const statWires = document.getElementById('stat-wires');
+      const statNf = document.getElementById('stat-nf');
+      const statNfWrap = document.getElementById('stat-nf-wrap');
+      const lastRuleFiredEl = document.getElementById('last-rule-fired');
+
+      const helpModal = document.getElementById('help-modal');
+      const btnHelp = document.getElementById('btn-help');
+      const btnCloseHelp = document.getElementById('btn-close-help');
+
+      // Application State
+      let currentSource = '';
+      let currentNet = null;
+      let runTimer = null;
+      let runDelayMs = Number(speedSlider.value) || 420;
+      const MAX_RUN_STEPS = 500;
+
+      // Viewport / Camera State
+      const camera = {
+        x: 0,
+        y: 0,
+        zoom: 1.0
+      };
+
+      // Interaction State
+      let draggingNode = null;
+      let isPanning = false;
+      let pointerDownPos = { x: 0, y: 0 };
+      let pointerMoved = false;
+      let hoveredPairId = null;
+      let hoveredNodeId = null;
+      let flashEffects = []; // [{ x, y, radius, alpha, label }]
+
+      // Agent color palette by name hash
+      const AGENT_PALETTE = [
+        '#38bdf8', '#a78bfa', '#34d399', '#f472b6',
+        '#60a5fa', '#fb923c', '#2dd4bf', '#e879f9'
+      ];
+
+      function getAgentColor(typeName) {
+        if (typeName === 'Result') return '#10b981';
+        if (typeName === 'ε' || typeName === 'Z' || typeName === 'Nil' || typeName === 'False') return '#94a3b8';
+        if (typeName === 'γ' || typeName === 'Add' || typeName === 'Map' || typeName === 'And') return '#38bdf8';
+        if (typeName === 'S' || typeName === 'Double' || typeName === 'Not' || typeName === 'Or') return '#a78bfa';
+        if (typeName === 'Cons' || typeName === 'True') return '#34d399';
+        let h = 0;
+        for (let i = 0; i < typeName.length; i++) {
+          h = (h * 31 + typeName.charCodeAt(i)) >>> 0;
+        }
+        return AGENT_PALETTE[h % AGENT_PALETTE.length];
+      }
+
+      // =========================================================================
+      // Editor Line Numbers & Diagnostics
+      // =========================================================================
+
+      function updateLineNumbers() {
+        const count = (codeEditor.value.match(/\n/g) || []).length + 1;
+        const nums = [];
+        for (let i = 1; i <= count; i++) nums.push(i);
+        lineNumbersEl.textContent = nums.join('\n');
+        lineNumbersEl.scrollTop = codeEditor.scrollTop;
+      }
+
+      codeEditor.addEventListener('input', updateLineNumbers);
+      codeEditor.addEventListener('scroll', () => {
+        lineNumbersEl.scrollTop = codeEditor.scrollTop;
+      });
+      codeEditor.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = codeEditor.selectionStart;
+          const end = codeEditor.selectionEnd;
+          codeEditor.value = codeEditor.value.substring(0, start) + '  ' + codeEditor.value.substring(end);
+          codeEditor.selectionStart = codeEditor.selectionEnd = start + 2;
+          updateLineNumbers();
+        }
+      });
+
+      function jumpToEditorLine(lineNum) {
+        const lines = codeEditor.value.split('\n');
+        let charOffset = 0;
+        for (let i = 0; i < Math.min(lineNum - 1, lines.length); i++) {
+          charOffset += lines[i].length + 1;
+        }
+        const lineLen = (lines[lineNum - 1] || '').length;
+        codeEditor.focus();
+        codeEditor.setSelectionRange(charOffset, charOffset + lineLen);
+        const lineHeight = 19.5;
+        codeEditor.scrollTop = Math.max(0, (lineNum - 4) * lineHeight);
+      }
+
+      function renderDiagnostics(parseResult) {
+        diagnosticsEl.innerHTML = '';
+        if (parseResult.ok) {
+          editorStatusBadge.textContent = 'Valid Net';
+          editorStatusBadge.style.color = 'var(--ok)';
+          const okDiv = document.createElement('div');
+          okDiv.className = 'diag-ok';
+          const agentCount = parseResult.agents.size;
+          const ruleCount = parseResult.rules.size;
+          okDiv.textContent = `✓ Parsed ${agentCount} agent type(s), ${ruleCount} rule(s), and net '${parseResult.netDef.name}' with 0 errors.`;
+          diagnosticsEl.appendChild(okDiv);
+        } else {
+          editorStatusBadge.textContent = `${parseResult.errors.length} Error(s)`;
+          editorStatusBadge.style.color = 'var(--err)';
+          for (const err of parseResult.errors) {
+            const item = document.createElement('div');
+            item.className = 'diag-err-item';
+            item.textContent = `✕ ${err.message}`;
+            item.title = `Click to jump to line ${err.line}`;
+            item.addEventListener('click', () => jumpToEditorLine(err.line));
+            diagnosticsEl.appendChild(item);
+          }
+        }
+      }
+
+      // =========================================================================
+      // Parse, Step, Step All, Run, Reset Controls
+      // =========================================================================
+
+      function stopRunning() {
+        if (runTimer !== null) {
+          clearInterval(runTimer);
+          runTimer = null;
+        }
+        btnRun.textContent = 'Run ▶';
+        btnRun.classList.remove('running');
+      }
+
+      function updateTelemetryUI() {
+        if (!currentNet) {
+          statSteps.textContent = '0';
+          statActive.textContent = '0';
+          statAgents.textContent = '0';
+          statWires.textContent = '0';
+          statNf.textContent = '—';
+          btnStep.disabled = true;
+          btnStepAll.disabled = true;
+          btnRun.disabled = true;
+          return;
+        }
+
+        const stats = Engine.getStats(currentNet);
+        statSteps.textContent = String(stats.steps);
+        statActive.textContent = String(stats.activePairs);
+        statAgents.textContent = String(stats.agents);
+        statWires.textContent = String(stats.wires);
+        statNf.textContent = stats.normalForm ? 'Yes' : 'No';
+        statNfWrap.className = stats.normalForm ? 'stat-pill stat-nf-yes' : 'stat-pill stat-nf-no';
+
+        const decoded = Engine.inspectResultValue(currentNet);
+        const ruleInfo = currentNet.lastRuleFired ? `Last fired: ${currentNet.lastRuleFired}` : 'Rule trace: initial net';
+        if (stats.normalForm && decoded !== null && decoded !== undefined) {
+          lastRuleFiredEl.textContent = `${ruleInfo} · Result = ${JSON.stringify(decoded)}`;
+        } else {
+          lastRuleFiredEl.textContent = ruleInfo;
+        }
+
+        const hasActive = stats.activePairs > 0;
+        btnStep.disabled = !hasActive;
+        btnStepAll.disabled = !hasActive;
+        if (!hasActive && runTimer !== null) {
+          stopRunning();
+        }
+        btnRun.disabled = !hasActive && runTimer === null;
+      }
+
+      function spawnFlash(pair) {
+        if (!pair || !pair.nodeA || !pair.nodeB) return;
+        flashEffects.push({
+          x: (pair.nodeA.x + pair.nodeB.x) * 0.5,
+          y: (pair.nodeA.y + pair.nodeB.y) * 0.5,
+          radius: 12,
+          alpha: 0.95,
+          label: `${pair.nodeA.type} >< ${pair.nodeB.type}`
+        });
+      }
+
+      function fitViewToNet() {
+        if (!currentNet || currentNet.nodes.size === 0) {
+          camera.x = 0;
+          camera.y = 0;
+          camera.zoom = 1.0;
+          return;
+        }
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (const n of currentNet.nodes.values()) {
+          if (n.x < minX) minX = n.x;
+          if (n.x > maxX) maxX = n.x;
+          if (n.y < minY) minY = n.y;
+          if (n.y > maxY) maxY = n.y;
+        }
+        camera.x = (minX + maxX) * 0.5;
+        camera.y = (minY + maxY) * 0.5;
+
+        const rect = canvas.getBoundingClientRect();
+        const spanX = Math.max(180, (maxX - minX) + 160);
+        const spanY = Math.max(180, (maxY - minY) + 160);
+        const zoomX = rect.width / spanX;
+        const zoomY = rect.height / spanY;
+        camera.zoom = Math.max(0.45, Math.min(1.35, Math.min(zoomX, zoomY)));
+      }
+
+      function parseAndRender(keepSourceAsResetBaseline = true) {
+        stopRunning();
+        const text = codeEditor.value;
+        if (keepSourceAsResetBaseline) {
+          currentSource = text;
+        }
+        const res = Engine.parseProgram(text);
+        renderDiagnostics(res);
+        if (res.ok) {
+          currentNet = res.net;
+          flashEffects = [];
+          fitViewToNet();
+        } else {
+          currentNet = null;
+        }
+        updateTelemetryUI();
+      }
+
+      function handleStep(pairId) {
+        if (!currentNet) return;
+        const pairs = Engine.findActivePairs(currentNet);
+        if (pairs.length === 0) return;
+
+        let targetPair = null;
+        if (typeof pairId === 'string') {
+          targetPair = pairs.find(p => p.id === pairId) || null;
+        }
+        if (!targetPair) {
+          targetPair = pairs.slice().sort((p1, p2) => {
+            const x1 = (p1.nodeA.x + p1.nodeB.x) * 0.5;
+            const x2 = (p2.nodeA.x + p2.nodeB.x) * 0.5;
+            if (Math.abs(x1 - x2) > 1e-3) return x1 - x2;
+            return p1.nodeA.id - p2.nodeA.id;
+          })[0];
+        }
+
+        spawnFlash(targetPair);
+        Engine.fireActivePair(currentNet, targetPair);
+        updateTelemetryUI();
+      }
+
+      function handleStepAll() {
+        if (!currentNet) return;
+        const pairs = Engine.findActivePairs(currentNet);
+        for (const p of pairs) spawnFlash(p);
+        Engine.stepAllParallel(currentNet);
+        updateTelemetryUI();
+      }
+
+      function startRunLoop() {
+        stopRunning();
+        if (!currentNet || Engine.findActivePairs(currentNet).length === 0) return;
+        btnRun.textContent = 'Pause ⏸';
+        btnRun.classList.add('running');
+
+        let sessionSteps = 0;
+        runTimer = setInterval(() => {
+          if (!currentNet || Engine.findActivePairs(currentNet).length === 0 || sessionSteps >= MAX_RUN_STEPS) {
+            stopRunning();
+            updateTelemetryUI();
+            return;
+          }
+          handleStep();
+          sessionSteps += 1;
+        }, runDelayMs);
+      }
+
+      btnParse.addEventListener('click', () => parseAndRender(true));
+      btnStep.addEventListener('click', () => handleStep());
+      btnStepAll.addEventListener('click', () => handleStepAll());
+      btnRun.addEventListener('click', () => {
+        if (runTimer !== null) {
+          stopRunning();
+        } else {
+          startRunLoop();
+        }
+      });
+      btnReset.addEventListener('click', () => {
+        if (currentSource) {
+          codeEditor.value = currentSource;
+          updateLineNumbers();
+        }
+        parseAndRender(false);
+      });
+      btnFit.addEventListener('click', fitViewToNet);
+
+      speedSlider.addEventListener('input', () => {
+        runDelayMs = Number(speedSlider.value) || 420;
+        speedLabel.textContent = `${runDelayMs}ms/step`;
+        if (runTimer !== null) {
+          startRunLoop();
+        }
+      });
+
+      exampleSelect.addEventListener('change', () => {
+        const key = exampleSelect.value;
+        if (Engine.EXAMPLES[key]) {
+          codeEditor.value = Engine.EXAMPLES[key];
+          updateLineNumbers();
+          parseAndRender(true);
+        }
+      });
+
+      btnHelp.addEventListener('click', () => helpModal.classList.add('open'));
+      btnCloseHelp.addEventListener('click', () => helpModal.classList.remove('open'));
+      helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) helpModal.classList.remove('open');
+      });
+
+      // =========================================================================
+      // Canvas Coordinate Transforms & Pointer Interaction
+      // =========================================================================
+
+      const NODE_RADIUS = 24;
+
+      function screenToWorld(sx, sy) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = rect.width * 0.5;
+        const cy = rect.height * 0.5;
+        return {
+          x: (sx - cx) / camera.zoom + camera.x,
+          y: (sy - cy) / camera.zoom + camera.y
+        };
+      }
+
+      function findNodeAtWorld(wx, wy) {
+        if (!currentNet) return null;
+        for (const node of currentNet.nodes.values()) {
+          const dx = wx - node.x;
+          const dy = wy - node.y;
+          if (dx * dx + dy * dy <= (NODE_RADIUS + 4) * (NODE_RADIUS + 4)) {
+            return node;
+          }
+        }
+        return null;
+      }
+
+      function findActivePairBadgeAtWorld(wx, wy) {
+        if (!currentNet) return null;
+        const pairs = Engine.findActivePairs(currentNet);
+        for (const p of pairs) {
+          const offA = Engine.getPortLocalOffset(p.nodeA, 0, NODE_RADIUS);
+          const offB = Engine.getPortLocalOffset(p.nodeB, 0, NODE_RADIUS);
+          const mx = ((p.nodeA.x + offA.dx) + (p.nodeB.x + offB.dx)) * 0.5;
+          const my = ((p.nodeA.y + offA.dy) + (p.nodeB.y + offB.dy)) * 0.5;
+          const dx = wx - mx;
+          const dy = wy - my;
+          if (dx * dx + dy * dy <= 18 * 18) {
+            return p;
+          }
+        }
+        return null;
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        pointerDownPos = { x: sx, y: sy };
+        pointerMoved = false;
+
+        const w = screenToWorld(sx, sy);
+        const hitNode = findNodeAtWorld(w.x, w.y);
+        if (hitNode) {
+          draggingNode = hitNode;
+        } else {
+          isPanning = true;
+        }
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        const dxScreen = sx - pointerDownPos.x;
+        const dyScreen = sy - pointerDownPos.y;
+        if (Math.abs(dxScreen) > 3 || Math.abs(dyScreen) > 3) {
+          pointerMoved = true;
+        }
+
+        const w = screenToWorld(sx, sy);
+
+        if (draggingNode) {
+          draggingNode.x = w.x;
+          draggingNode.y = w.y;
+          draggingNode.vx = 0;
+          draggingNode.vy = 0;
+          return;
+        }
+
+        if (isPanning) {
+          camera.x -= dxScreen / camera.zoom;
+          camera.y -= dyScreen / camera.zoom;
+          pointerDownPos = { x: sx, y: sy };
+          return;
+        }
+
+        // Hover detection for active pairs & nodes
+        if (currentNet && sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+          const badgePair = findActivePairBadgeAtWorld(w.x, w.y);
+          const hitNode = findNodeAtWorld(w.x, w.y);
+          hoveredNodeId = hitNode ? hitNode.id : null;
+          hoveredPairId = badgePair ? badgePair.id : null;
+          if (!hoveredPairId && hitNode) {
+            const pairs = Engine.findActivePairs(currentNet);
+            const belonging = pairs.find(p => p.nodeA.id === hitNode.id || p.nodeB.id === hitNode.id);
+            if (belonging) hoveredPairId = belonging.id;
+          }
+          canvas.style.cursor = (hoveredPairId || hitNode) ? 'pointer' : 'grab';
+        }
+      });
+
+      window.addEventListener('pointerup', (e) => {
+        if (!pointerMoved && currentNet) {
+          const rect = canvas.getBoundingClientRect();
+          const sx = e.clientX - rect.left;
+          const sy = e.clientY - rect.top;
+          if (sx >= 0 && sy >= 0 && sx <= rect.width && sy <= rect.height) {
+            const w = screenToWorld(sx, sy);
+            const badgePair = findActivePairBadgeAtWorld(w.x, w.y);
+            if (badgePair) {
+              handleStep(badgePair.id);
+            } else {
+              const hitNode = findNodeAtWorld(w.x, w.y);
+              if (hitNode) {
+                const pairs = Engine.findActivePairs(currentNet);
+                const belonging = pairs.find(p => p.nodeA.id === hitNode.id || p.nodeB.id === hitNode.id);
+                if (belonging) {
+                  handleStep(belonging.id);
+                }
+              }
+            }
+          }
+        }
+        draggingNode = null;
+        isPanning = false;
+      });
+
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        camera.zoom = Math.max(0.3, Math.min(2.6, camera.zoom * factor));
+      }, { passive: false });
+
+      // =========================================================================
+      // Pure <canvas> Rendering Loop
+      // =========================================================================
+
+      function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+
+      function getPortWorldAndNormal(node, portIdx) {
+        const off = Engine.getPortLocalOffset(node, portIdx, NODE_RADIUS);
+        const len = Math.sqrt(off.dx * off.dx + off.dy * off.dy) || 1;
+        return {
+          x: node.x + off.dx,
+          y: node.y + off.dy,
+          nx: off.dx / len,
+          ny: off.dy / len
+        };
+      }
+
+      function drawCanvasFrame(timestamp) {
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.width / dpr;
+        const height = canvas.height / dpr;
+
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        // 1. Background & Subtle Grid
+        ctx.fillStyle = '#0b0e14';
+        ctx.fillRect(0, 0, width, height);
+
+        const gridStep = 40 * camera.zoom;
+        if (gridStep >= 14) {
+          ctx.strokeStyle = 'rgba(42, 53, 77, 0.28)';
+          ctx.lineWidth = 1;
+          const offsetX = ((width * 0.5) - camera.x * camera.zoom) % gridStep;
+          const offsetY = ((height * 0.5) - camera.y * camera.zoom) % gridStep;
+          ctx.beginPath();
+          for (let x = offsetX; x < width; x += gridStep) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+          }
+          for (let y = offsetY; y < height; y += gridStep) {
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+          }
+          ctx.stroke();
+        }
+
+        if (!currentNet) {
+          ctx.fillStyle = '#6b7d96';
+          ctx.font = '14px ui-monospace, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('Fix syntax errors and click [Parse & Render] to visualize net.', width * 0.5, height * 0.5);
+          ctx.restore();
+          requestAnimationFrame(drawCanvasFrame);
+          return;
+        }
+
+        // Advance physics layout smoothly
+        Engine.stepLayoutPhysics(currentNet, draggingNode ? draggingNode.id : null);
+
+        const activePairs = Engine.findActivePairs(currentNet);
+        const activeNodeIds = new Set();
+        const activePairByNode = new Map();
+        for (const p of activePairs) {
+          activeNodeIds.add(p.nodeA.id);
+          activeNodeIds.add(p.nodeB.id);
+          activePairByNode.set(p.nodeA.id, p);
+          activePairByNode.set(p.nodeB.id, p);
+        }
+
+        const pulse = 0.5 + 0.5 * Math.sin(timestamp * 0.0065);
+
+        ctx.save();
+        ctx.translate(width * 0.5, height * 0.5);
+        ctx.scale(camera.zoom, camera.zoom);
+        ctx.translate(-camera.x, -camera.y);
+
+        // 2. Draw Wires (Cubic Bézier curves)
+        for (const nodeA of currentNet.nodes.values()) {
+          for (let pA = 0; pA < nodeA.ports.length; pA++) {
+            const conn = nodeA.ports[pA];
+            if (!conn) {
+              // Root / interface cap on Result's unused principal port
+              if (pA === 0) {
+                const pt = getPortWorldAndNormal(nodeA, 0);
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(pt.x, pt.y);
+                ctx.lineTo(pt.x, pt.y - 14);
+                ctx.moveTo(pt.x - 7, pt.y - 14);
+                ctx.lineTo(pt.x + 7, pt.y - 14);
+                ctx.stroke();
+              }
+              continue;
+            }
+
+            // Avoid drawing each undirected wire twice
+            if (conn.nodeId < nodeA.id || (conn.nodeId === nodeA.id && conn.port < pA)) {
+              continue;
+            }
+
+            const nodeB = currentNet.nodes.get(conn.nodeId);
+            if (!nodeB) continue;
+            const pB = conn.port;
+
+            const endA = getPortWorldAndNormal(nodeA, pA);
+            const endB = getPortWorldAndNormal(nodeB, pB);
+
+            const isActiveWire = (
+              pA === 0 && pB === 0 &&
+              nodeA.id !== nodeB.id &&
+              activeNodeIds.has(nodeA.id) &&
+              activePairByNode.get(nodeA.id) === activePairByNode.get(nodeB.id)
+            );
+
+            const dx = endB.x - endA.x;
+            const dy = endB.y - endA.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const tangentSpan = nodeA.id === nodeB.id ? 52 : Math.max(28, Math.min(95, dist * 0.45));
+
+            const cp1x = endA.x + endA.nx * tangentSpan + (nodeA.id === nodeB.id ? 34 : 0);
+            const cp1y = endA.y + endA.ny * tangentSpan;
+            const cp2x = endB.x + endB.nx * tangentSpan + (nodeA.id === nodeB.id ? 34 : 0);
+            const cp2y = endB.y + endB.ny * tangentSpan;
+
+            if (isActiveWire) {
+              const pairObj = activePairByNode.get(nodeA.id);
+              const isHovered = pairObj && pairObj.id === hoveredPairId;
+
+              // Outer active glow
+              ctx.save();
+              ctx.strokeStyle = isHovered
+                ? 'rgba(251, 191, 36, 0.55)'
+                : `rgba(245, 158, 11, ${0.24 + 0.25 * pulse})`;
+              ctx.lineWidth = isHovered ? 11 : 8 + 3 * pulse;
+              ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.moveTo(endA.x, endA.y);
+              ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endB.x, endB.y);
+              ctx.stroke();
+
+              // Core active wire
+              ctx.strokeStyle = isHovered ? '#fde047' : '#f59e0b';
+              ctx.lineWidth = 3.2;
+              ctx.beginPath();
+              ctx.moveTo(endA.x, endA.y);
+              ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endB.x, endB.y);
+              ctx.stroke();
+
+              // Midpoint '><' interaction pill
+              const mx = 0.125 * endA.x + 0.375 * cp1x + 0.375 * cp2x + 0.125 * endB.x;
+              const my = 0.125 * endA.y + 0.375 * cp1y + 0.375 * cp2y + 0.125 * endB.y;
+              ctx.fillStyle = isHovered ? '#f59e0b' : '#1f293d';
+              ctx.strokeStyle = '#fbbf24';
+              ctx.lineWidth = 1.6;
+              ctx.beginPath();
+              ctx.arc(mx, my, 11, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+
+              ctx.fillStyle = isHovered ? '#0b0e14' : '#fde047';
+              ctx.font = 'bold 10px ui-monospace, monospace';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('><', mx, my + 0.5);
+              ctx.restore();
+            } else {
+              ctx.strokeStyle = '#526685';
+              ctx.lineWidth = 2.1;
+              ctx.beginPath();
+              ctx.moveTo(endA.x, endA.y);
+              ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endB.x, endB.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 3. Draw Firing Flash Animations
+        for (let i = flashEffects.length - 1; i >= 0; i--) {
+          const f = flashEffects[i];
+          ctx.save();
+          ctx.strokeStyle = `rgba(251, 191, 36, ${f.alpha})`;
+          ctx.fillStyle = `rgba(245, 158, 11, ${f.alpha * 0.22})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          f.radius += 2.2;
+          f.alpha -= 0.045;
+          if (f.alpha <= 0) flashEffects.splice(i, 1);
+        }
+
+        // 4. Draw Agent Nodes (Circles, Principal Port ▲ on Top, Aux Ports ● on Bottom)
+        for (const node of currentNet.nodes.values()) {
+          const isActive = activeNodeIds.has(node.id);
+          const pairObj = activePairByNode.get(node.id);
+          const isHovered = (node.id === hoveredNodeId) || (pairObj && pairObj.id === hoveredPairId);
+          const baseColor = getAgentColor(node.type);
+
+          // Active pair pulse ring around agent circle
+          if (isActive) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, NODE_RADIUS + 5 + 3 * pulse, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(245, 158, 11, ${0.16 + 0.14 * pulse})`;
+            ctx.fill();
+            ctx.strokeStyle = isHovered ? '#fde047' : 'rgba(245, 158, 11, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Agent circle body
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2);
+          ctx.fillStyle = isActive ? '#231f17' : '#151c2b';
+          ctx.fill();
+          ctx.lineWidth = isHovered ? 3 : 2.2;
+          ctx.strokeStyle = isActive ? '#f59e0b' : baseColor;
+          ctx.stroke();
+
+          // Principal port marker on top (port 0) — distinct triangle ▲
+          const p0 = getPortWorldAndNormal(node, 0);
+          ctx.save();
+          ctx.fillStyle = isActive ? '#fbbf24' : baseColor;
+          ctx.strokeStyle = '#0b0e14';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y - 5.5);
+          ctx.lineTo(p0.x - 5.2, p0.y + 3.8);
+          ctx.lineTo(p0.x + 5.2, p0.y + 3.8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // Auxiliary ports around bottom (ports 1..arity)
+          for (let p = 1; p <= node.arity; p++) {
+            const pt = getPortWorldAndNormal(node, p);
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 4.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = baseColor;
+            ctx.stroke();
+
+            if (node.arity > 1) {
+              ctx.fillStyle = '#9fb0c7';
+              ctx.font = '9px ui-monospace, monospace';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(String(p), node.x + (pt.x - node.x) * 0.66, node.y + (pt.y - node.y) * 0.66);
+            }
+          }
+
+          // Agent Name & Arity inside circle
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = node.type.length > 4
+            ? 'bold 11px ui-monospace, monospace'
+            : 'bold 13px ui-monospace, monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(node.type, node.x, node.y - 3);
+
+          ctx.fillStyle = isActive ? '#fcd34d' : '#7c90ad';
+          ctx.font = '9.5px ui-monospace, monospace';
+          ctx.fillText(`/${node.arity}`, node.x, node.y + 10);
+        }
+
+        // Empty net normal form message (e.g. ε >< ε)
+        if (currentNet.nodes.size === 0) {
+          ctx.fillStyle = '#10b981';
+          ctx.font = '13px ui-monospace, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            `Empty net normal form reached (${currentNet.freeLoops || 0} closed wire loop(s))`,
+            camera.x,
+            camera.y
+          );
+        }
+
+        ctx.restore();
+        ctx.restore();
+        requestAnimationFrame(drawCanvasFrame);
+      }
+
+      // Initialize workbench on load
+      window.addEventListener('load', () => {
+        resizeCanvas();
+        codeEditor.value = Engine.EXAMPLES.combinators;
+        updateLineNumbers();
+        parseAndRender(true);
+        requestAnimationFrame(drawCanvasFrame);
+      });
+    })();
+  </script>
+</body>
+</html>
